@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const PDF_PATH = path.join(__dirname, "../../data/price-list.pdf");
+export const PDF_PATH = path.join(__dirname, "../../../data/knowledge-base/price-list.pdf");
 
 // Headings are ALL CAPS lines. The ingest step splits on them.
 const SECTIONS = [
@@ -71,6 +71,7 @@ const SECTIONS = [
   },
 ];
 
+/** Generate the clinic price-list PDF at the configured knowledge-base path. */
 export async function generatePdf(clinicName = "BrightSmile Dental") {
   fs.mkdirSync(path.dirname(PDF_PATH), { recursive: true });
   const doc = new PDFDocument({ margin: 56 });
@@ -79,16 +80,16 @@ export async function generatePdf(clinicName = "BrightSmile Dental") {
 
   doc.fontSize(22).text(clinicName + " Price List", { align: "left" });
   doc.moveDown(0.3).fontSize(10).text("Effective 2026. Prices in PKR.");
-  for (const s of SECTIONS) {
-    doc.moveDown(1).fontSize(13).font("Helvetica-Bold").text(s.heading);
+  for (const section of SECTIONS) {
+    doc.moveDown(1).fontSize(13).font("Helvetica-Bold").text(section.heading);
     doc.moveDown(0.3).font("Helvetica").fontSize(11);
-    for (const l of s.lines) doc.text(l);
+    for (const line of section.lines) doc.text(line);
   }
   doc.end();
-  await new Promise((r) => stream.on("finish", r));
+  await new Promise((resolve) => stream.on("finish", resolve));
   return PDF_PATH;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  generatePdf().then((p) => console.log("PDF written to", p));
+  generatePdf().then((pdfPath) => console.log("PDF written to", pdfPath));
 }

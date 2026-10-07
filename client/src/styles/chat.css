@@ -1,36 +1,3 @@
-:root {
-  --bg: #eef3f3;
-  --panel: #ffffff;
-  --ink: #14302f;
-  --muted: #5b7371;
-  --line: #d5e0df;
-  --accent: #0e7c7b;
-  --accent-ink: #ffffff;
-  --user: #14302f;
-  --chip: #e1f0ef;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d1b1b;
-    --panel: #152826;
-    --ink: #e6f1f0;
-    --muted: #94b0ad;
-    --line: #25403d;
-    --accent: #4fc3bf;
-    --accent-ink: #082322;
-    --user: #4fc3bf;
-    --chip: #1d3a37;
-  }
-}
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; margin: 0; }
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  line-height: 1.5;
-  padding: 28px 16px;
-}
 .shell {
   max-width: 720px;
   height: 100%;
@@ -38,11 +5,10 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--panel);
-  border-inline: 1px solid var(--line);
   border: 1px solid var(--line);
-    border-radius: 18px;
-    overflow: hidden;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
 }
 .top {
   display: flex;
@@ -71,14 +37,6 @@ body {
   flex: 1; font: inherit; padding: 11px 14px; border-radius: 10px;
   border: 1px solid var(--line); background: var(--bg); color: var(--ink);
 }
-button {
-  font: inherit; font-weight: 600; cursor: pointer; padding: 10px 18px; border-radius: 10px;
-  border: 0; background: var(--accent); color: var(--accent-ink);
-}
-button:disabled { opacity: 0.45; cursor: not-allowed; }
-button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500; padding: 8px 14px; }
-button.ghost:hover { border-color: var(--accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .typing { display: flex; gap: 4px; padding: 14px; }
 .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; }
 .typing span:nth-child(2) { animation-delay: 0.2s; }
@@ -86,4 +44,3 @@ button.ghost:hover { border-color: var(--accent); }
 @keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .typing span { animation: none; opacity: 0.6; } }
 @media (max-width: 560px) {body{padding: 0;} .row { max-width: 94%; } .shell { border-inline: 0;border-radius: 0;border: 0;box-shadow: none; } }
- 

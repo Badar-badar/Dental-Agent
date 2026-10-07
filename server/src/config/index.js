@@ -1,4 +1,4 @@
-const num = (v, d) => (v === undefined || v === "" ? d : Number(v));
+const num = (value, fallback) => (value === undefined || value === "" ? fallback : Number(value));
 
 export const config = {
   port: num(process.env.PORT, 4000),

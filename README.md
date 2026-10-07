@@ -17,7 +17,7 @@ docker compose up --build
 # open http://localhost:8080
 ```
 
-First boot generates `server/data/price-list.pdf`, chunks it, embeds it with Gemini and stores it in Chroma.
+First boot generates `server/data/knowledge-base/price-list.pdf` if it is missing, chunks it, embeds it with Gemini and stores it in Chroma.
 With `MOCK_CALENDAR=true` (default) bookings go to an in-memory calendar so you can test immediately.
 
 ## Real Google Calendar
@@ -35,11 +35,40 @@ With `MOCK_CALENDAR=true` (default) bookings go to an in-memory calendar so you 
 
 | Concern | File |
 |---|---|
-| PDF creation | `server/src/rag/generatePdf.js` |
-| Chunk, embed, store | `server/src/rag/chunk.js`, `embed.js`, `ingest.js` |
-| Retrieval | `server/src/rag/search.js` |
-| MCP server (tools) | `server/src/mcp/calendarServer.js` |
-| Slot logic | `server/src/mcp/slots.js` |
-| Agent loop + MCP client | `server/src/agent.js` |
+| Express app and bootstrap | `server/src/app.js`, `server/src/index.js` |
+| Chat route/controller | `server/src/routes/chat.routes.js`, `server/src/controllers/chat.controller.js` |
+| Session persistence | `server/src/models/Session.js`, `server/src/services/session.service.js` |
+| Agent loop and MCP client | `server/src/services/agent.service.js` |
+| System prompt | `server/src/prompts/systemPrompt.js` |
+| PDF and RAG pipeline | `server/src/rag/pdf/generatePdf.js`, `chunking.js`, `embeddings.js`, `ingest.js`, `retriever.js`, `vectorStore.js` |
+| MCP tools, slots, and providers | `server/src/mcp/server/`, `server/src/mcp/providers/` |
+| Client API, chat hook, and UI | `client/src/api/`, `client/src/hooks/`, `client/src/components/` |
 
 Re-ingest after changing the PDF: `docker compose exec server npm run ingest`.
+
+## Project structure
+
+```text
+client/
+  src/
+    api/                 Chat API requests
+    components/          Chat header, messages, prompts, and composer
+    constants/           Tool labels and starter prompts
+    hooks/               Chat state and actions
+    styles/              Base and chat styles
+server/
+  data/knowledge-base/   Clinic price-list PDF
+  scripts/               Local operational scripts
+  src/
+    config/              Environment configuration
+    controllers/         HTTP request handlers
+    mcp/                 MCP server, slots, and calendar providers
+    models/              Mongoose models
+    prompts/             Agent system prompt
+    rag/                 PDF ingestion and retrieval
+    routes/               Express routes
+    services/             Agent and session services
+    utils/                Logger
+docs/
+  architecture.md
+```

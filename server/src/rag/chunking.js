@@ -2,7 +2,7 @@ const isHeading = (line) => /^[A-Z][A-Z\s,'&/-]{5,}$/.test(line.trim());
 
 /** Split extracted PDF text into section chunks, each prefixed by its heading. */
 export function chunkText(text, maxChars = 700) {
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
   const sections = [];
   let current = null;
   for (const line of lines) {
@@ -15,18 +15,18 @@ export function chunkText(text, maxChars = 700) {
   }
 
   const chunks = [];
-  for (const s of sections) {
-    let buf = [];
-    let len = 0;
+  for (const section of sections) {
+    let buffer = [];
+    let length = 0;
     const flush = () => {
-      if (buf.length) chunks.push(`${s.heading}\n${buf.join("\n")}`);
-      buf = [];
-      len = 0;
+      if (buffer.length) chunks.push(`${section.heading}\n${buffer.join("\n")}`);
+      buffer = [];
+      length = 0;
     };
-    for (const l of s.lines) {
-      if (len + l.length > maxChars) flush();
-      buf.push(l);
-      len += l.length;
+    for (const line of section.lines) {
+      if (length + line.length > maxChars) flush();
+      buffer.push(line);
+      length += line.length;
     }
     flush();
   }

@@ -2,13 +2,15 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { DateTime } from "luxon";
 import { z } from "zod";
-import { config } from "../config.js";
-import { getBusy, insertEvent } from "./calendar.js";
+import { config } from "../../config/index.js";
+import { getBusy, insertEvent } from "../providers/index.js";
 import { computeFreeSlots, isWithinClinicHours } from "./slots.js";
 
 const { clinic } = config;
 const server = new McpServer({ name: "dental-calendar", version: "1.0.0" });
-const text = (obj) => ({ content: [{ type: "text", text: typeof obj === "string" ? obj : JSON.stringify(obj) }] });
+const text = (value) => ({
+  content: [{ type: "text", text: typeof value === "string" ? value : JSON.stringify(value) }],
+});
 
 async function busyForDay(date) {
   const day = DateTime.fromISO(date, { zone: clinic.tz });
@@ -26,10 +28,12 @@ server.tool(
     try {
       const busy = await busyForDay(date);
       const slots = computeFreeSlots({ date, durationMins, busy, clinic });
-      if (!slots.length) return text({ date, available: false, message: "No free slots (closed, fully booked, or in the past)." });
+      if (!slots.length) {
+        return text({ date, available: false, message: "No free slots (closed, fully booked, or in the past)." });
+      }
       return text({ date, available: true, timezone: clinic.tz, slots });
-    } catch (e) {
-      return text({ error: e.message });
+    } catch (caught) {
+      return text({ error: caught.message });
     }
   }
 );
@@ -49,24 +53,33 @@ server.tool(
       if (!isWithinClinicHours(startTime, durationMins, clinic)) {
         return text({ booked: false, error: "That time is outside clinic hours." });
       }
-      // Re-check right before insert to prevent double-booking.
       const start = DateTime.fromISO(startTime, { zone: clinic.tz });
       const day = start.toFormat("yyyy-MM-dd");
-      const free = computeFreeSlots({ date: day, durationMins, busy: await busyForDay(day), clinic });
-      if (!free.some((s) => DateTime.fromISO(s.start).toMillis() === start.toMillis())) {
+      const free = computeFreeSlots({
+        date: day,
+        durationMins,
+        busy: await busyForDay(day),
+        clinic,
+      });
+      if (!free.some((slot) => DateTime.fromISO(slot.start).toMillis() === start.toMillis())) {
         return text({ booked: false, error: "That slot is no longer available. Offer other times." });
       }
       const end = start.plus({ minutes: durationMins });
-      const ev = await insertEvent({
+      const event = await insertEvent({
         summary: `${service} - ${patientName}`,
         description: `Patient: ${patientName}\nPhone: ${phone}\nService: ${service}\nBooked via AI assistant`,
         start: start.toISO(),
         end: end.toISO(),
         timeZone: clinic.tz,
       });
-      return text({ booked: true, eventId: ev.id, link: ev.link, when: start.toFormat("cccc d LLLL yyyy, h:mm a") });
-    } catch (e) {
-      return text({ booked: false, error: e.message });
+      return text({
+        booked: true,
+        eventId: event.id,
+        link: event.link,
+        when: start.toFormat("cccc d LLLL yyyy, h:mm a"),
+      });
+    } catch (caught) {
+      return text({ booked: false, error: caught.message });
     }
   }
 );
