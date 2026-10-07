@@ -28,7 +28,29 @@
 .user .bubble { background: var(--user); color: var(--accent-ink); border-top-right-radius: 4px; }
 .user .bubble { color: #fff; }
 @media (prefers-color-scheme: dark) { .user .bubble { color: #082322; } }
-.bubble.error { background: transparent; border: 1px solid #c0392b; color: #c0392b; }
+.system-error {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--system-error-border);
+  border-radius: 12px;
+  background: var(--system-error-bg);
+  color: var(--system-error-ink);
+}
+.system-error-icon { width: 18px; height: 18px; flex: 0 0 auto; }
+.system-error-text { flex: 1; }
+.system-error-retry {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font-weight: 500;
+}
+.system-error-retry:hover { background: var(--system-error-hover); }
 .tools { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .chip { font-size: 0.78rem; padding: 2px 10px; border-radius: 999px; background: var(--chip); color: var(--ink); }
 .starters { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; margin-top: 4px; }

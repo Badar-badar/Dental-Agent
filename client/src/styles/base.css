@@ -8,6 +8,10 @@
   --accent-ink: #ffffff;
   --user: #14302f;
   --chip: #e1f0ef;
+  --system-error-bg: #fff4dc;
+  --system-error-border: #ead6a5;
+  --system-error-ink: #624b1e;
+  --system-error-hover: rgba(98, 75, 30, 0.08);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -20,6 +24,10 @@
     --accent-ink: #082322;
     --user: #4fc3bf;
     --chip: #1d3a37;
+    --system-error-bg: #382f1d;
+    --system-error-border: #695a37;
+    --system-error-ink: #f2d99f;
+    --system-error-hover: rgba(242, 217, 159, 0.1);
   }
 }
 * { box-sizing: border-box; }

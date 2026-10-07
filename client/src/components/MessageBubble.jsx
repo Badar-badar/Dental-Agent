@@ -4,7 +4,7 @@ import { TOOL_LABELS } from "../constants/toolLabels.js";
 export default function MessageBubble({ message }) {
   return (
     <div className={`row ${message.role}`}>
-      <div className={`bubble ${message.error ? "error" : ""}`}>{message.text}</div>
+      <div className="bubble">{message.text}</div>
       {message.tools?.length > 0 && (
         <div className="tools">
           {message.tools.map((tool) => (

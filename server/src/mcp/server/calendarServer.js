@@ -5,6 +5,7 @@ import { z } from "zod";
 import { config } from "../../config/index.js";
 import { getBusy, insertEvent } from "../providers/index.js";
 import { computeFreeSlots, isWithinClinicHours } from "./slots.js";
+import { error as logError } from "../../utils/logger.js";
 
 const { clinic } = config;
 const server = new McpServer({ name: "dental-calendar", version: "1.0.0" });
@@ -33,7 +34,8 @@ server.tool(
       }
       return text({ date, available: true, timezone: clinic.tz, slots });
     } catch (caught) {
-      return text({ error: caught.message });
+      logError("mcp", caught);
+      return text({ available: false, error: "The calendar service is temporarily unavailable." });
     }
   }
 );
@@ -79,7 +81,11 @@ server.tool(
         when: start.toFormat("cccc d LLLL yyyy, h:mm a"),
       });
     } catch (caught) {
-      return text({ booked: false, error: caught.message });
+      logError("mcp", caught);
+      return text({
+        booked: false,
+        error: "The calendar tool failed. The appointment has not been booked.",
+      });
     }
   }
 );

@@ -18,21 +18,28 @@ export function useChat() {
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [lastUserMessage, setLastUserMessage] = useState("");
 
-  async function send(text) {
+  async function send(text, isRetry = false) {
     const message = text.trim();
     if (!message || busy) return;
-    setMessages((current) => [...current, { role: "user", text: message }]);
+    if (!isRetry) {
+      setLastUserMessage(message);
+      setMessages((current) => [...current, { role: "user", text: message }]);
+    }
     setInput("");
     setBusy(true);
     try {
       const data = await sendChatMessage(sessionId, message);
       setMessages((current) => [
-        ...current,
+        ...current.filter((item) => item.role !== "system"),
         { role: "assistant", text: data.reply, tools: [...new Set(data.toolsUsed)] },
       ]);
     } catch (caught) {
-      setMessages((current) => [...current, { role: "assistant", text: caught.message, error: true }]);
+      setMessages((current) => [
+        ...current.filter((item) => item.role !== "system"),
+        { role: "system", text: caught.message, error: true },
+      ]);
     } finally {
       setBusy(false);
     }
@@ -43,8 +50,9 @@ export function useChat() {
     const id = crypto.randomUUID();
     localStorage.setItem("sessionId", id);
     setSessionId(id);
+    setLastUserMessage("");
     setMessages([{ role: "assistant", text: "New conversation started. How can I help?" }]);
   }
 
-  return { messages, input, busy, setInput, send, newChat };
+  return { messages, input, busy, lastUserMessage, setInput, send, newChat };
 }

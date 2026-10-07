@@ -7,6 +7,7 @@ export const config = {
   chromaPort: num(process.env.CHROMA_PORT, 8000),
   geminiKey: process.env.GEMINI_API_KEY,
   model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+  fallbackModel: process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite",
   embedModel: process.env.GEMINI_EMBED_MODEL || "gemini-embedding-001",
   embedDims: num(process.env.EMBED_DIMS, 768),
   clinic: {

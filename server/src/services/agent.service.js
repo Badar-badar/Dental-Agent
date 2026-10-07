@@ -6,12 +6,13 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { config } from "../config/index.js";
 import { buildSystemPrompt } from "../prompts/systemPrompt.js";
 import { searchPriceList } from "../rag/retriever.js";
-import { info } from "../utils/logger.js";
+import { error as logError, info } from "../utils/logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ai = new GoogleGenAI({ apiKey: config.geminiKey });
 const mcp = new Client({ name: "dental-agent", version: "1.0.0" });
 let functionDeclarations = [];
+let primaryModelExhaustedUntil = 0;
 
 const RAG_TOOL = {
   name: "search_price_list",
@@ -23,6 +24,54 @@ const RAG_TOOL = {
     required: ["query"],
   },
 };
+
+export class GeminiRequestError extends Error {
+  constructor(cause) {
+    super("Gemini request failed", { cause });
+    this.name = "GeminiRequestError";
+  }
+}
+
+function getStatus(error) {
+  const status = error?.status ?? error?.response?.status;
+  const numericStatus = Number(status);
+  return Number.isFinite(numericStatus) ? numericStatus : undefined;
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function generateWithRetry(params) {
+  let model = Date.now() < primaryModelExhaustedUntil ? config.fallbackModel : params.model;
+  let retryCount = 0;
+
+  while (true) {
+    try {
+      return await ai.models.generateContent({ ...params, model });
+    } catch (cause) {
+      const status = getStatus(cause);
+      if (status === 429 && model !== config.fallbackModel) {
+        primaryModelExhaustedUntil = Date.now() + 10 * 60 * 1000;
+        info("agent", `${status} on ${model}, switching to ${config.fallbackModel}`);
+        model = config.fallbackModel;
+        continue;
+      }
+
+      if ((status === 500 || status === 503) && retryCount < 3) {
+        if (model !== config.fallbackModel) {
+          info("agent", `${status} on ${model}, switching to ${config.fallbackModel}`);
+          model = config.fallbackModel;
+        }
+        await wait(1000 * 2 ** retryCount);
+        retryCount++;
+        continue;
+      }
+
+      throw new GeminiRequestError(cause);
+    }
+  }
+}
 
 /** Spawn the MCP calendar server and load its tools for Gemini function calling. */
 export async function initAgent() {
@@ -51,6 +100,7 @@ async function runTool(name, args) {
   }
   const response = await mcp.callTool({ name, arguments: args });
   const raw = response.content?.[0]?.text ?? "";
+  if (response.isError) throw new Error(`MCP tool ${name} failed: ${raw}`);
   try {
     return JSON.parse(raw);
   } catch {
@@ -62,7 +112,7 @@ async function runTool(name, args) {
 export async function runAgent(contents) {
   const toolsUsed = [];
   for (let step = 0; step < 6; step++) {
-    const response = await ai.models.generateContent({
+    const response = await generateWithRetry({
       model: config.model,
       contents,
       config: {
@@ -87,8 +137,24 @@ export async function runAgent(contents) {
       let output;
       try {
         output = await runTool(call.name, call.args || {});
+        if (
+          (call.name === "check_availability" || call.name === "create_appointment") &&
+          output?.error
+        ) {
+          output = {
+            ...output,
+            booked: false,
+            error: "The calendar tool failed. The appointment has not been booked.",
+          };
+        }
       } catch (caught) {
-        output = { error: caught.message };
+        logError("agent", caught);
+        output = call.name === "check_availability" || call.name === "create_appointment"
+          ? {
+              booked: false,
+              error: "The calendar tool failed. The appointment has not been booked.",
+            }
+          : { error: "Clinic information is temporarily unavailable." };
       }
       parts.push({ functionResponse: { name: call.name, response: output } });
     }

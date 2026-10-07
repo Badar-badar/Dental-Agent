@@ -14,6 +14,8 @@ export default function App() {
         messages={chat.messages}
         busy={chat.busy}
         onStarterSelect={chat.send}
+        onRetry={() => chat.send(chat.lastUserMessage, true)}
+        retryDisabled={chat.busy || !chat.lastUserMessage}
       />
       <Composer
         input={chat.input}
