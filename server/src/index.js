@@ -10,7 +10,7 @@ async function main() {
   await mongoose.connect(config.mongoUri);
   await ingest();
   await initAgent();
-  app.listen(config.port, () => info("server", `listening on :${config.port}`));
+  app.listen(config.port, "0.0.0.0", () => info("server", `listening on :${config.port}`));
 }
 
 main().catch((caught) => {

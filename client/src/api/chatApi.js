@@ -1,10 +1,11 @@
+const API = import.meta.env.VITE_API_URL || "";
 const SERVER_UNREACHABLE = "We can't reach the server. Please check your connection and try again.";
 const KNOWN_ERROR_CODES = new Set(["busy", "config", "service", "invalid", "rate_limit", "unknown"]);
 
 /** Send a chat message and return its established { reply, toolsUsed } response. */
 export async function sendChatMessage(sessionId, message) {
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch(`${API}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId, message }),
@@ -34,5 +35,5 @@ export async function sendChatMessage(sessionId, message) {
 
 /** Request deletion of the server-side history for a session. */
 export function deleteChatSession(sessionId) {
-  return fetch(`/api/chat/${sessionId}`, { method: "DELETE" });
+  return fetch(`${API}/api/chat/${sessionId}`, { method: "DELETE" });
 }

@@ -1,7 +1,11 @@
 import { ChromaClient } from "chromadb";
 import { config } from "../config/index.js";
 
-const client = new ChromaClient({ host: config.chromaHost, port: config.chromaPort, ssl: false });
+const client = new ChromaClient({
+  host: config.chromaHost,
+  port: config.chromaPort,
+  ssl: config.chromaSsl,
+});
 const NAME = "dental_price_list";
 
 /** Get or create the collection used to store Gemini-generated embeddings. */

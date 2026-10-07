@@ -1,12 +1,35 @@
 import { runAgent } from "../services/agent.service.js";
 import { deleteSession, loadSession, saveSession } from "../services/session.service.js";
-import { toUserError } from "../utils/errors.js";
 import { error as logError } from "../utils/logger.js";
+
+function getStatus(caught) {
+  for (let error = caught; error; error = error.cause) {
+    const status = Number(error.status ?? error.statusCode ?? error.response?.status);
+    if (Number.isFinite(status)) return status;
+  }
+  return undefined;
+}
 
 function respondWithError(res, caught) {
   logError("server", caught);
-  const { status, code, message } = toUserError(caught);
-  return res.status(status).json({ error: message, code });
+  const status = getStatus(caught);
+  if (status === 429) {
+    return res.status(429).json({
+      error: "We're receiving a lot of requests right now. Please try again in a minute.",
+      code: "busy",
+    });
+  }
+  if (status === 503) {
+    return res.status(503).json({
+      error: "The assistant is busy at the moment. Please try again in a minute.",
+      code: "busy",
+    });
+  }
+  const fallbackStatus = caught?.code === "INVALID_BODY" ? 400 : 500;
+  return res.status(fallbackStatus).json({
+    error: "Something went wrong on our side. Please try again.",
+    code: fallbackStatus === 400 ? "invalid" : "unknown",
+  });
 }
 
 /** Validate and process one chat message, preserving the established response shape. */

@@ -5,6 +5,7 @@ export const config = {
   mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/dental",
   chromaHost: process.env.CHROMA_HOST || "localhost",
   chromaPort: num(process.env.CHROMA_PORT, 8000),
+  chromaSsl: process.env.CHROMA_SSL === "true",
   geminiKey: process.env.GEMINI_API_KEY,
   model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
   fallbackModel: process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite",

@@ -43,7 +43,8 @@ function wait(milliseconds) {
 }
 
 async function generateWithRetry(params) {
-  let model = Date.now() < primaryModelExhaustedUntil ? config.fallbackModel : params.model;
+  const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || config.fallbackModel;
+  let model = Date.now() < primaryModelExhaustedUntil ? fallbackModel : params.model;
   let retryCount = 0;
 
   while (true) {
@@ -51,17 +52,17 @@ async function generateWithRetry(params) {
       return await ai.models.generateContent({ ...params, model });
     } catch (cause) {
       const status = getStatus(cause);
-      if (status === 429 && model !== config.fallbackModel) {
+      if (status === 429 && model !== fallbackModel) {
         primaryModelExhaustedUntil = Date.now() + 10 * 60 * 1000;
-        info("agent", `${status} on ${model}, switching to ${config.fallbackModel}`);
-        model = config.fallbackModel;
+        info("agent", `${status} on ${model}, switching to ${fallbackModel}`);
+        model = fallbackModel;
         continue;
       }
 
       if ((status === 500 || status === 503) && retryCount < 3) {
-        if (model !== config.fallbackModel) {
-          info("agent", `${status} on ${model}, switching to ${config.fallbackModel}`);
-          model = config.fallbackModel;
+        if (model !== fallbackModel) {
+          info("agent", `${status} on ${model}, switching to ${fallbackModel}`);
+          model = fallbackModel;
         }
         await wait(1000 * 2 ** retryCount);
         retryCount++;
